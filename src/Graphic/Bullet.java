@@ -4,11 +4,11 @@ package Graphic;
  * Created by Administrator on 2016/6/2.
  */
 public class Bullet{
-    private int speed=5;
+    private int speed=10;
     private int x;
     private int y;
     private int direct;
-    private int radius=10;
+    private int radius=5;
     public Bullet(){}
     public Bullet(int speed, int x, int y, int direct, int radius) {
         this.speed = speed;

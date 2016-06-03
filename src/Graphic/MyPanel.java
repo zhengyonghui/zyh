@@ -45,10 +45,26 @@ public class MyPanel extends JPanel implements KeyListener {
 
     public void startRun(){
         while(!enemys.isEmpty()){
+            boolean myTankHitted=false;
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            }
+            for(EnemyTank enemyTank:enemys){
+                for(Bullet bullet:enemyTank.getLoadBullets()){
+                    if(beHitted(myTank,bullet)){
+                        myTankHitted=true;
+                        break;
+                    }
+                }
+                if(myTankHitted){
+                    break;
+                }
+            }
+            if(myTankHitted){
+                System.out.println("game over");
+                break;
             }
             repaint();
         }
@@ -200,5 +216,21 @@ public class MyPanel extends JPanel implements KeyListener {
                 break;
         }
         return canMove;
+    }
+    public boolean beHitted(Tank tank,Bullet bullet){
+        boolean beHitted=false;
+        if(tank.getDirect()==DirectConstant.EAST||tank.getDirect()==DirectConstant.WEST){
+            System.out.println("qqqqqqqqqqqqqqqqqqqqqqq");
+            if(bullet.getX()>=tank.getX()-tank.getWheelLong()/2&&bullet.getX()<=tank.getX()+tank.getWheelLong()/2&&bullet.getY()>=tank.getY()-tank.getWarehouseWidth()/2-tank.getWheelShort()&&bullet.getY()<=tank.getY()+tank.getWarehouseWidth()/2+tank.getWheelShort()){
+                System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+                beHitted=true;
+            }
+        }
+        if(tank.getDirect()==DirectConstant.NORTH||tank.getDirect()==DirectConstant.SOUTH){
+            if(bullet.getX()>=tank.getX()-tank.getWarehouseWidth()/2-tank.getWheelShort()&&bullet.getX()<=tank.getX()+tank.getWarehouseWidth()/2+tank.getWheelShort()&&bullet.getY()>=tank.getY()-tank.getWheelLong()/2&&bullet.getY()<=tank.getY()+tank.getWheelLong()/2){
+                beHitted=true;
+            }
+        }
+        return beHitted;
     }
 }
