@@ -1,9 +1,12 @@
 package Graphic;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,34 +16,88 @@ import java.util.List;
 public class MyPanel extends JPanel implements KeyListener {
     private MyTank myTank;
     private List<EnemyTank> enemys;
+    private List<Bomb> bombs;
+    Image image1=null;
+    Image image2=null;
+    Image image3=null;
     MyPanel(){
         this.setSize(Constant.MY_PANEL_WIDTH,Constant.MY_PANEL_HEIGHT);
         myTank=new MyTank(30,30,20,DirectConstant.NORTH);
         enemys=new ArrayList<>();
+        bombs=new ArrayList<>();
         for(int i=0;i<Constant.ENEMY_NUM;i++){
-            EnemyTank enemyTank=new EnemyTank(50,20*(i+1),10,DirectConstant.SOUTH);
+            EnemyTank enemyTank=new EnemyTank(50*(i+1),20*(i+1),10,DirectConstant.SOUTH);
             Thread t=new Thread(enemyTank);
             t.start();
             enemys.add(enemyTank);
         }
+        try {
+            image1=ImageIO.read(new File("images/bomb_1.gif"));
+            System.out.println("image1");
+            image2=ImageIO.read(new File("images/bomb_2.gif"));
+            image3=ImageIO.read(new File("images/bomb_3.gif"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
     public void paint(Graphics g) {
         super.paint(g);
         //首先画我的tank
-        g.setColor(Color.RED);
-        drawTank(Color.BLACK,myTank,g);
+        if(!myTank.isBeHitted()){
+            g.setColor(Color.RED);
+            drawTank(Color.BLACK,myTank,g);
+        }
+        //画敌人的tank
         for(Tank tank:enemys){
-            System.out.println("--");
             drawTank(Color.YELLOW,tank,g);
             if(tank.getLoadBullets()!=null){
-                System.out.println(2222);
-                for(Bullet bullet:tank.getLoadBullets()){
-                    System.out.println(3333);
+                List<Bullet> bullets=tank.getLoadBullets();
+                List<Bullet> needRemove=new ArrayList<>();
+                for(Bullet bullet:bullets){
+                    if(!bullet.isLive()){
+                        needRemove.add(bullet);
+                    }
                     drawBullet(Color.BLUE,bullet,g);
                 }
+                bullets.removeAll(needRemove);
             }
         }
-        System.out.println("repaint");
+        List<Bullet> bullets=myTank.getLoadBullets();
+        List<Bullet> needRemove=new ArrayList<>();
+        for(Bullet bullet:bullets){
+            if(!bullet.isLive()){
+                needRemove.add(bullet);
+            }
+            drawBullet(Color.RED,bullet,g);
+        }
+        bullets.removeAll(needRemove);
+
+
+        //画bombs
+        if(bombs.size()>0){
+            drawBomb(g);
+        }
+    }
+    public void drawBomb(Graphics g){
+        System.out.println("draw bomb");
+        List<Bomb> removedBombs=new ArrayList<>();
+        for(Bomb bomb:bombs){
+            if(bomb.getLife()>=6){
+                g.drawImage(image1,bomb.getX(),bomb.getY(),30,30,this);
+            }
+            if(bomb.getLife()>=3){
+                g.drawImage(image2,bomb.getX(),bomb.getY(),30,30,this);
+            }
+            if(bomb.getLife()>=0){
+                g.drawImage(image3,bomb.getX(),bomb.getY(),30,30,this);
+            }
+            bomb.lifeDown();
+            if(bomb.getLife()<=0){
+                removedBombs.add(bomb);
+            }
+        }
+        bombs.removeAll(removedBombs);
     }
 
     public void startRun(){
@@ -51,27 +108,51 @@ public class MyPanel extends JPanel implements KeyListener {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            //判断我有没有被击中
             for(EnemyTank enemyTank:enemys){
                 for(Bullet bullet:enemyTank.getLoadBullets()){
-                    if(beHitted(myTank,bullet)){
-                        myTankHitted=true;
-                        break;
+                    if(bullet.isLive()){
+                        if(beHitted(myTank,bullet)){
+                            myTankHitted=true;
+                            addBomb(myTank);
+                            break;
+                        }
                     }
                 }
-                if(myTankHitted){
-                    break;
+            }
+
+            //判断敌人的坦克有没有被我击中
+            List<EnemyTank> removed=new ArrayList<>();
+            for(Bullet bullet:myTank.getLoadBullets()){
+                if(bullet.isLive()){
+                    for(EnemyTank e :enemys){
+                        if (beHitted(e, bullet)) {
+                            addBomb(e);
+                            removed.add(e);
+                        }
+                    }
                 }
             }
-            if(myTankHitted){
-                System.out.println("game over");
-                break;
-            }
+            enemys.removeAll(removed);
             repaint();
         }
     }
     private void drawBullet(Color color,Bullet bullet,Graphics g){
         g.setColor(color);
-        g.fillOval(bullet.getX(),bullet.getY(),bullet.getRadius(),bullet.getRadius());
+        g.draw3DRect(bullet.getX(),bullet.getY(),1,1,false);
+    }
+    public void addBomb(Tank tank){
+        int x;
+        int y;
+        if(tank.getDirect()==DirectConstant.NORTH||tank.getDirect()==DirectConstant.SOUTH){
+            x=tank.getX()-tank.getWarehouseWidth()/2-tank.getWheelShort();
+            y=tank.getY()-tank.getWheelLong()/2;
+        }
+        else{
+            x=tank.getX()-tank.getWheelLong()/2;
+            y=tank.getY()-tank.getWarehouseWidth()/2-tank.getWheelShort();
+        }
+        bombs.add(new Bomb(x,y));
     }
     private void drawTank(Color color,Tank tank,Graphics g){
         g.setColor(color);
@@ -177,6 +258,10 @@ public class MyPanel extends JPanel implements KeyListener {
                 myTank.setDirect(DirectConstant.EAST);
             }
         }
+        else if(keyEvent.getKeyCode()==KeyEvent.VK_J){
+            Bullet bullet=myTank.loadBullet();
+            myTank.getLoadBullets().add(bullet);
+        }
         this.repaint();
     }
 
@@ -217,12 +302,11 @@ public class MyPanel extends JPanel implements KeyListener {
         }
         return canMove;
     }
+
     public boolean beHitted(Tank tank,Bullet bullet){
         boolean beHitted=false;
         if(tank.getDirect()==DirectConstant.EAST||tank.getDirect()==DirectConstant.WEST){
-            System.out.println("qqqqqqqqqqqqqqqqqqqqqqq");
             if(bullet.getX()>=tank.getX()-tank.getWheelLong()/2&&bullet.getX()<=tank.getX()+tank.getWheelLong()/2&&bullet.getY()>=tank.getY()-tank.getWarehouseWidth()/2-tank.getWheelShort()&&bullet.getY()<=tank.getY()+tank.getWarehouseWidth()/2+tank.getWheelShort()){
-                System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
                 beHitted=true;
             }
         }
@@ -230,6 +314,10 @@ public class MyPanel extends JPanel implements KeyListener {
             if(bullet.getX()>=tank.getX()-tank.getWarehouseWidth()/2-tank.getWheelShort()&&bullet.getX()<=tank.getX()+tank.getWarehouseWidth()/2+tank.getWheelShort()&&bullet.getY()>=tank.getY()-tank.getWheelLong()/2&&bullet.getY()<=tank.getY()+tank.getWheelLong()/2){
                 beHitted=true;
             }
+        }
+        if(beHitted){
+            tank.setBeHitted(true);
+            bullet.setLive(false);
         }
         return beHitted;
     }

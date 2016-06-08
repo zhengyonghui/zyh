@@ -16,6 +16,7 @@ public class Tank {
     private int barrelLength=8;
     private int speed;
     private int direct;
+    private boolean beHitted=false;
     private List<Bullet> loadBullets;
 
     public Tank(int x, int y, int speed, int direct) {
@@ -98,6 +99,14 @@ public class Tank {
         this.barrelLength = barrelLength;
     }
 
+    public boolean isBeHitted() {
+        return beHitted;
+    }
+
+    public void setBeHitted(boolean beHitted) {
+        this.beHitted = beHitted;
+    }
+
     public void move(){
         switch(direct){
             case DirectConstant.NORTH:
@@ -122,5 +131,30 @@ public class Tank {
         this.loadBullets = loadBullets;
     }
 
-    public Bullet  loadBullet(){return null;}
+
+    public Bullet loadBullet(){
+        Bullet bullet=new Bullet();
+        switch(this.getDirect()){
+            case DirectConstant.NORTH:
+                bullet.setY(this.getY()-this.getBarrelLength());
+                bullet.setX(this.getX());
+                break;
+            case DirectConstant.EAST:
+                bullet.setX(this.getX()+this.getBarrelLength());
+                bullet.setY(this.getY());
+                break;
+            case DirectConstant.SOUTH:
+                bullet.setX(this.getX());
+                bullet.setY(this.getY()+this.getBarrelLength());
+                break;
+            case DirectConstant.WEST:
+                bullet.setX(this.getX()-this.getBarrelLength());
+                bullet.setY(this.getY());
+                break;
+        }
+        bullet.setDirect(this.getDirect());
+        Thread t=new Thread(bullet);
+        t.start();
+        return bullet;
+    }
 }

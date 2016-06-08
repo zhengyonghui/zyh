@@ -1,35 +1,34 @@
 package Graphic;
 
-import javax.swing.*;
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Administrator on 2016/5/27.
  */
-public class Test extends JPanel {
+public class Test {
     public static void main(String args[]){
-        JButton button=new JButton("hello");
-        JButton j1=new JButton("right");
-        JButton j2=new JButton("left");
-        JButton j3=new JButton("up");
-        JButton j4=new JButton("bellow");
-        JFrame jFrame=new JFrame();
-        jFrame.setSize(300,300);
-        jFrame.add(button,BorderLayout.CENTER);
-        jFrame.add(j1,BorderLayout.EAST);
-        jFrame.add(j2,BorderLayout.WEST);
-        jFrame.add(j3,BorderLayout.NORTH);
-        jFrame.add(j4,BorderLayout.SOUTH);
-        Test t=new Test();
-        jFrame.add(t);
-        jFrame.setVisible(true);
-        jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
+        List<String> test=new ArrayList<>();
+        test.add("hello");
+        test.add("a");
+        test.add("b");
+        test.add("c");
+        test.add("d");
+        test.add("e");
+        test.add("f");
+        test.add("g");
+        test.add("h");
+        test.add("i");
+        System.out.println("删除以前size="+test.size());
+        List<String> needRemove=new ArrayList<>();
+        for(int i=0;i<test.size();i++){
+            String s=test.get(i);
+            test.remove(s);
+        }
+        test.removeAll(needRemove);
+        System.out.println("删除后的size="+test.size());
 
     }
-    public void paint(Graphics g){
-        g.drawLine(0,1,100,1000);
-        g.drawRect(0,0,12,23);
-    }
+
 
 }

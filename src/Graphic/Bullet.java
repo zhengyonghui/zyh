@@ -3,12 +3,13 @@ package Graphic;
 /**
  * Created by Administrator on 2016/6/2.
  */
-public class Bullet{
+public class Bullet implements Runnable{
     private int speed=10;
     private int x;
     private int y;
     private int direct;
     private int radius=5;
+    private boolean isLive=true;
     public Bullet(){}
     public Bullet(int speed, int x, int y, int direct, int radius) {
         this.speed = speed;
@@ -58,27 +59,47 @@ public class Bullet{
         this.radius = radius;
     }
 
+    public boolean isLive() {
+        return isLive;
+    }
 
-    public void move() {
-        switch (direct){
-            case DirectConstant.NORTH:
-                y-=speed;
-                break;
-            case DirectConstant.EAST:
-                x+=speed;
-                break;
-            case DirectConstant.SOUTH:
-                y+=speed;
-                break;
-            case DirectConstant.WEST:
-                x-=speed;
-                break;
+    public void setLive(boolean live) {
+        isLive = live;
+    }
+
+    @Override
+    public void run() {
+        while(isLive()){
+            try{
+                Thread.sleep(500);
+                switch (direct){
+                    case DirectConstant.NORTH:
+                        y-=speed;
+                        break;
+                    case DirectConstant.EAST:
+                        x+=speed;
+                        break;
+                    case DirectConstant.SOUTH:
+                        y+=speed;
+                        break;
+                    case DirectConstant.WEST:
+                        x-=speed;
+                        break;
+                }
+                if(overSpill()){
+                    break;
+                }
+            }
+            catch (InterruptedException e){
+                e.printStackTrace();
+            }
         }
     }
-    public boolean isLive(){
-        if(x<=0||y<=0||x>=Constant.MY_PANEL_WIDTH||y>=Constant.MY_PANEL_HEIGHT){
-            return false;
+    public boolean overSpill(){
+        if(this.getX()<=0||this.getX()>=Constant.MY_PANEL_WIDTH||this.getY()<=0||this.getY()>=Constant.MY_PANEL_HEIGHT){
+            this.setLive(false);
+            return true;
         }
-        return true;
+        return false;
     }
 }
